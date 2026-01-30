@@ -1,0 +1,107 @@
+// Prisma schema for Ridepool
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────
+// USERS
+// ─────────────────────────────────────────────────────────────
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  ridesOffered     Ride[]          @relation("DriverRides")
+  bookings         RideBooking[]   @relation("RiderBookings")
+  friendsRequested Friendship[]    @relation("FriendRequester")
+  friendsReceived  Friendship[]    @relation("FriendAddressee")
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────
+// FRIENDSHIPS
+// ─────────────────────────────────────────────────────────────
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+model Friendship {
+  id          String           @id @default(cuid())
+  requesterId String           @map("requester_id")
+  addresseeId String           @map("addressee_id")
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  requester User @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  // Prevent duplicate friendships
+  @@unique([requesterId, addresseeId])
+  @@map("friendships")
+}
+
+// ─────────────────────────────────────────────────────────────
+// RIDES
+// ─────────────────────────────────────────────────────────────
+enum RideStatus {
+  ACTIVE
+  CANCELLED
+  COMPLETED
+}
+
+model Ride {
+  id             String     @id @default(cuid())
+  driverId       String     @map("driver_id")
+  origin         String
+  destination    String
+  departAt       DateTime   @map("depart_at")
+  seatsTotal     Int        @map("seats_total")
+  seatsAvailable Int        @map("seats_available")
+  notes          String?
+  status         RideStatus @default(ACTIVE)
+  createdAt      DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  driver   User          @relation("DriverRides", fields: [driverId], references: [id], onDelete: Cascade)
+  bookings RideBooking[]
+
+  @@map("rides")
+}
+
+// ─────────────────────────────────────────────────────────────
+// RIDE BOOKINGS
+// ─────────────────────────────────────────────────────────────
+enum BookingStatus {
+  BOOKED
+  CANCELLED
+}
+
+model RideBooking {
+  id        String        @id @default(cuid())
+  rideId    String        @map("ride_id")
+  riderId   String        @map("rider_id")
+  seats     Int           @default(1)
+  status    BookingStatus @default(BOOKED)
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  // Relations
+  ride  Ride @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  rider User @relation("RiderBookings", fields: [riderId], references: [id], onDelete: Cascade)
+
+  // One active booking per rider per ride
+  @@unique([rideId, riderId])
+  @@map("ride_bookings")
+}
