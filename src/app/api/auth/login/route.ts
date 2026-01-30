@@ -1,6 +1,8 @@
 // POST /api/auth/login
 // Authenticates a user and creates a session
 
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword, createSession } from "@/lib/auth";

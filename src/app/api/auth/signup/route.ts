@@ -1,6 +1,8 @@
 // POST /api/auth/signup
 // Creates a new user account
 
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, createSession } from "@/lib/auth";

@@ -1,6 +1,8 @@
 // POST /api/auth/logout
 // Destroys the user's session
 
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { destroySession } from "@/lib/auth";
 
